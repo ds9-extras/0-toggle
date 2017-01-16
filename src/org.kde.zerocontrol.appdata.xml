@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2017 Dan Leinir Turthra Jensen <admin@leinir.dk> -->
+<component type="desktop">
+  <id>org.kde.zerocontrol</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0+</project_license>
+  <name>ZeroNet Control</name>
+  <summary>Control ZeroNet on your system</summary>
+  <description>
+    <p>
+      A tiny button that sits in your panel, which lets you control your ZeroNet instance.
+    </p>
+  </description>
+  <screenshots>
+  </screenshots>
+  <url type="homepage">http://www.kde.org/</url>
+  <url type="bugtracker">https://bugs.kde.org/</url>
+  <project_group>KDE</project_group>
+  <provides>
+  </provides>
+</component>

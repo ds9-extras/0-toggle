@@ -1,0 +1,22 @@
+[Desktop Entry]
+Name=ZeroNet Controller
+Comment=Control ZeroNet on your system
+
+Icon=applications-system
+Type=Service
+ServiceTypes=Plasma/Applet
+
+X-KDE-Library=plasma_applet_zerocontrol
+X-KDE-PluginInfo-Author=Dan Leinir Turthra Jensen
+X-KDE-PluginInfo-Email=admin@leinir.dk
+X-KDE-PluginInfo-Name=zerocontrol
+X-KDE-PluginInfo-Version=1.0
+X-KDE-PluginInfo-Website=http://plasma.kde.org/
+X-KDE-PluginInfo-Category=Utilities
+X-KDE-PluginInfo-Depends=
+X-KDE-PluginInfo-License=GPL
+X-KDE-PluginInfo-EnabledByDefault=true
+X-KDE-PluginInfo-Name=org.kde.zerocontrol
+
+X-Plasma-API=declarativeappletscript
+X-Plasma-MainScript=ui/main.qml

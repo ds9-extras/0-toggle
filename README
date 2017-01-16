@@ -1,0 +1,23 @@
+ZeroNet Controller plasmoid
+---------------------------
+
+-- Build instructions --
+
+cd 0-toggle (or where ever you cloned/decompressed the sources)
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=MYPREFIX .. 
+make 
+make install
+
+(MYPREFIX is where you install your Plasma setup, replace it accordingly - likely /usr)
+
+Restart plasma to load the applet 
+(in a terminal type: 
+kquitapp plasmashell 
+and then
+plasmashell
+and you should be able to find it in the applet browser)
+
+or view it with 
+plasmawindowed org.kde.zerocontrol
