@@ -30,6 +30,7 @@ class zerocontrol : public Plasma::Applet
     Q_PROPERTY(RunningStatus status READ status WRITE setStatus NOTIFY statusChanged)
     Q_PROPERTY(QString iconName READ iconName NOTIFY statusChanged)
     Q_PROPERTY(bool systemZeronet READ systemZeronet WRITE setSystemZeronet NOTIFY systemZeronetChanged)
+    Q_PROPERTY(QString zeronetLocation READ zeronetLocation WRITE setZeronetLocation NOTIFY zeronetLocationChanged)
 public:
     zerocontrol( QObject *parent, const QVariantList &args );
     ~zerocontrol();
@@ -52,6 +53,10 @@ public:
     bool systemZeronet() const;
     void setSystemZeronet(bool newValue);
     Q_SIGNAL void systemZeronetChanged();
+
+    QString zeronetLocation() const;
+    void setZeronetLocation(QString newLocation);
+    Q_SIGNAL void zeronetLocationChanged();
 
 private:
     class Private;

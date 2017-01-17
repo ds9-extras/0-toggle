@@ -43,6 +43,11 @@ Item {
         property: "systemZeronet";
         value: plasmoid.configuration.systemZeronet;
     }
+    Binding {
+        target: plasmoid.nativeInterface;
+        property: "zeronetLocation";
+        value: plasmoid.configuration.zeronetLocation;
+    }
 
     Plasmoid.compactRepresentation: Item {
         PlasmaCore.IconItem {

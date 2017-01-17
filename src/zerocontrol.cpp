@@ -41,6 +41,7 @@ public:
     }
     zerocontrol* q;
     bool systemZeronet;
+    QString zeronetLocation;
 
     void setWhatSuProgram() {
         whatSuProgram = "kdesu";
@@ -243,6 +244,17 @@ void zerocontrol::setSystemZeronet(bool newValue)
 {
     d->systemZeronet = newValue;
     emit systemZeronetChanged();
+}
+
+QString zerocontrol::zeronetLocation() const
+{
+    return d->zeronetLocation;
+}
+
+void zerocontrol::setZeronetLocation(QString newLocation)
+{
+    d->zeronetLocation = newLocation;
+    emit zeronetLocationChanged();
 }
 
 K_EXPORT_PLASMA_APPLET_WITH_JSON(zerocontrol, zerocontrol, "metadata.json")
