@@ -31,7 +31,7 @@ class zerocontrol::Private {
 public:
     Private(zerocontrol* qq)
         : q(qq)
-        , systemZeronet(true)
+        , systemZeronet(false)
         , zeronetPid(-1)
         , status(Unknown)
     {
@@ -58,6 +58,7 @@ public:
     {
         QString output;
         QProcess cmd;
+        cmd.setWorkingDirectory(zeronetLocation);
         cmd.start(whatSuProgram, args);
         if(cmd.waitForStarted()) {
             if(cmd.waitForFinished()) {
@@ -187,10 +188,10 @@ void zerocontrol::setStatus(zerocontrol::RunningStatus newStatus)
         }
         else if((status() == NotRunning || status() == Unknown) && newStatus == Running) {
             if(d->useTor()) {
-                QProcess::startDetached("python", QStringList() << "zeronet.py" << "--tor" << "always" << "--ui_ip" << "\"*\"", QString(), &d->zeronetPid);
+                QProcess::startDetached("python", QStringList() << "zeronet.py" << "--tor" << "always" << "--ui_ip" << "\"*\"", d->zeronetLocation, &d->zeronetPid);
             }
             else {
-                QProcess::startDetached("python", QStringList() << "zeronet.py" << "--ui_ip" << "\"*\"", QString(), &d->zeronetPid);
+                QProcess::startDetached("python", QStringList() << "zeronet.py" << "--ui_ip" << "\"*\"", d->zeronetLocation, &d->zeronetPid);
             }
             qDebug() << "started zeronet with pid" << d->zeronetPid;
         }
