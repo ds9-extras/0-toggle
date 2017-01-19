@@ -40,6 +40,7 @@ Item {
         PlasmaComponents.Label {
             anchors.fill: parent;
             text: i18n("Switch your instance of ZeroNet on and off.");
+            wrapMode: Text.WordWrap;
         }
     }
     Item {
