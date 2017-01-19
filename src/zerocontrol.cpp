@@ -19,6 +19,7 @@
 #include "zerocontrol.h"
 
 #include <QDebug>
+#include <QFile>
 #include <QProcess>
 #include <QTimer>
 
@@ -187,11 +188,14 @@ void zerocontrol::setStatus(zerocontrol::RunningStatus newStatus)
             d->zeronetPid = -2;
         }
         else if((status() == NotRunning || status() == Unknown) && newStatus == Running) {
+            if(!QFile::exists(d->zeronetLocation)) {
+                qDebug() << "The zeronet location setting is" << d->zeronetLocation << "but that directory does not exist";
+            }
             if(d->useTor()) {
-                QProcess::startDetached("python", QStringList() << "zeronet.py" << "--tor" << "always" << "--ui_ip" << "\"*\"", d->zeronetLocation, &d->zeronetPid);
+                QProcess::startDetached("python", QStringList() << "zeronet.py" << "--tor" << "always" << "--ui_ip" << "*", d->zeronetLocation, &d->zeronetPid);
             }
             else {
-                QProcess::startDetached("python", QStringList() << "zeronet.py" << "--ui_ip" << "\"*\"", d->zeronetLocation, &d->zeronetPid);
+                QProcess::startDetached("python", QStringList() << "zeronet.py" << "--ui_ip" << "*", d->zeronetLocation, &d->zeronetPid);
             }
             qDebug() << "started zeronet with pid" << d->zeronetPid;
         }
@@ -254,7 +258,7 @@ QString zerocontrol::zeronetLocation() const
 
 void zerocontrol::setZeronetLocation(QString newLocation)
 {
-    d->zeronetLocation = newLocation;
+    d->zeronetLocation = newLocation.replace("~", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first());
     emit zeronetLocationChanged();
 }
 
