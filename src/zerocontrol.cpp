@@ -81,13 +81,14 @@ public:
                 if(data.length() > 0) {
                     Q_FOREACH(const QString& item, data) {
                         if(item.contains("zeronet.py")) {
-                            zeronetPid = item.split(" ").first().toInt();
+                            zeronetPid = item.split(" ", QString::SkipEmptyParts).first().toInt();
                             break;
                         }
                     }
                 }
             }
         }
+        updateStatus();
     }
 
     bool useTor() {
