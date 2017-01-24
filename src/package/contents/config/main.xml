@@ -8,7 +8,7 @@
   <group name="General">
     <entry name="zeronetLocation" type="Path">
       <label>Location of the ZeroNet installation</label>
-      <default>~/zeronet</default>
+      <default>~/ZeroNet-master</default>
     </entry>
     <entry name="systemZeronet" type="Bool">
       <label>Use system ZeroNet instance (requires super user access, aka sudo)</label>

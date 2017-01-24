@@ -39,6 +39,17 @@ QtLayouts.ColumnLayout {
             }
         }
     }
+    QtControls.Label {
+        QtLayouts.Layout.fillWidth: true
+        wrapMode: Text.WordWrap;
+        text: i18n("Please point this at the location of your ZeroNet download. You can follow the instructions found on <a href=\"https://zeronet.readthedocs.io/en/latest/using_zeronet/installing/\">this website</a>.");
+        onLinkActivated: Qt.openUrlExternally(link);
+        MouseArea {
+            anchors.fill: parent;
+            cursorShape: parent.hoveredLink != "" ? Qt.PointingHandCursor : Qt.ArrowCursor;
+            acceptedButtons: Qt.NoButton;
+        }
+    }
     Item {
         QtLayouts.Layout.fillHeight: true
     }
