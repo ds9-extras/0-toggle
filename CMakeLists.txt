@@ -17,11 +17,15 @@ include(CheckIncludeFiles)
 find_package(KF5 REQUIRED COMPONENTS
     Plasma
     I18n
+    KIO
+    Archive
 )
 
 find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Quick
     Core
 )
+
+find_package(packagekitqt5)
 
 add_subdirectory(src)
