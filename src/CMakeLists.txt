@@ -20,6 +20,7 @@ target_link_libraries(plasma_applet_zerocontrol
                       KF5::I18n
                       KF5::KIOCore
                       KF5::Archive
+                      KF5::CoreAddons
                       PK::packagekitqt5)
 
 
