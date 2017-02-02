@@ -19,14 +19,23 @@
 #include "zerocontrol.h"
 
 #include <QDebug>
+#include <QDir>
 #include <QFile>
 #include <QProcess>
 #include <QTimer>
 
 #include <klocalizedstring.h>
+#include <kformat.h>
+#include <KTar>
+
+// DO NOT LIKE! D:
+#define KSharedConfigPtr KSharedConfigPtr_is_also_something_else
+#include <kio/job.h>
+#include <kio/copyjob.h>
+
+#include <PackageKit/Daemon>
 
 #include <sys/stat.h>
-#include <signal.h>
 
 class zerocontrol::Private {
 public:
@@ -43,6 +52,7 @@ public:
     zerocontrol* q;
     bool systemZeronet;
     QString zeronetLocation;
+    QString workingOn;
 
     void setWhatSuProgram() {
         whatSuProgram = "kdesu";
@@ -107,6 +117,25 @@ public:
 
     QTimer statusCheck;
     RunningStatus status;
+    bool systemSanityCheck() {
+        // check python install
+        QProcess pythonTest;
+        pythonTest.start("python", QStringList() << "--version");
+        if(!(pythonTest.waitForStarted() && pythonTest.waitForFinished(1000))) {
+//         if(true) {
+            status = NoPython;
+            // python does not function properly...
+            return false;
+        }
+        // check zeronet availability
+        if(!QFile::exists(QString("%1/zeronet.py").arg(zeronetLocation))) {
+//         if(true) {
+            status = NotZeronet;
+            return false;
+        }
+        // If we get to here, then the system is sane
+        return true;
+    }
     void updateStatus() {
         if(zeronetPid > 0) {
             status = Running;
@@ -119,14 +148,61 @@ public:
             }
         }
         else if(zeronetPid == -1) {
-            // We've just started up, find out whether we've actually got a running zeronet instance or not...
-            findZeronetPid();
+            if(systemSanityCheck()) {
+                // We've just started up, find out whether we've actually got a running zeronet instance or not...
+                findZeronetPid();
+            }
         }
         else if(zeronetPid == -2) {
-            // We've already been stopped, or we checked, so we know our status explicitly
-            status = NotRunning;
+            if(systemSanityCheck()) {
+                // We've already been stopped, or we checked, so we know our status explicitly
+                status = NotRunning;
+            }
         }
         emit q->statusChanged();
+    }
+
+    void downloadZeroNetResult(KJob* job) {
+        if(job->error()) {
+            endWorkingOn(i18n("Error downloading: %1").arg(job->errorString()), true);
+        }
+        else {
+            workingOn = i18n("Decompressing ZeroNet...");
+            emit q->workingOnChanged();
+            KTar tarball(QString("%1.tar.gz").arg(zeronetLocation));
+            if(tarball.open(QIODevice::ReadOnly)) {
+                const KArchiveEntry* entry = tarball.directory()->entry("ZeroNet-master");
+                if(entry && entry->isDirectory()) {
+                    const KArchiveDirectory* dir = static_cast<const KArchiveDirectory*>(entry);
+                    if(dir->copyTo(zeronetLocation)) {
+                        endWorkingOn(i18n("Completed ZeroNet installation!"));
+                        tarball.close();
+                        QFile::remove(QString("%1.tar.gz").arg(zeronetLocation));
+                        updateStatus();
+                    }
+                    else {
+                        endWorkingOn(i18n("Failed to decompress the ZeroNet archive. The reported error was: %1").arg(tarball.errorString()), true);
+                    }
+                }
+                else {
+                    endWorkingOn(i18n("Archive is not the expected format. ZeroNet download would seem to be corrupted."), true);
+                }
+            }
+            else {
+                endWorkingOn(i18n("Failed to open downloaded ZeroNet archive for decompression."), true);
+            }
+        }
+    }
+    void endWorkingOn(QString message, bool isError = false) {
+        if(isError) {
+            qWarning() << "Work completed with an error!" << message;
+        }
+        else {
+            qDebug() << "Work completed successfully:" << message;
+        }
+        workingOn = message;
+        emit q->workingOnChanged();
+        QTimer::singleShot(3000, q, [=](){ workingOn = ""; emit q->workingOnChanged(); });
     }
 };
 
@@ -260,7 +336,108 @@ QString zerocontrol::zeronetLocation() const
 void zerocontrol::setZeronetLocation(QString newLocation)
 {
     d->zeronetLocation = newLocation.replace("~", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first());
+    while(d->zeronetLocation.endsWith("/")) {
+        d->zeronetLocation = d->zeronetLocation.left(d->zeronetLocation.length() - 1);
+    }
     emit zeronetLocationChanged();
+}
+
+QString zerocontrol::workingOn() const
+{
+    return d->workingOn;
+}
+
+void zerocontrol::installZeroNet()
+{
+    QDir dir(d->zeronetLocation);
+    if(dir.exists() && dir.entryList(QDir::AllEntries).count() > 2) {
+        d->endWorkingOn(i18n("The zeronet location in settings (%1) already exists, and is not empty. Please either remove it, or ensure that it is empty.").arg(d->zeronetLocation), true);
+    }
+    else if(!dir.exists() && !dir.mkdir(d->zeronetLocation)) {
+        d->endWorkingOn(i18n("The zeronet location in settings (%1) could not be created. Please ensure that it is set to a writeable location.").arg(d->zeronetLocation), true);
+    }
+
+    d->workingOn = i18n("Downloading ZeroNet...");
+    emit workingOnChanged();
+    QUrl source("https://github.com/HelloZeroNet/ZeroNet/archive/master.tar.gz");
+    QUrl destination(QString("file://%1.tar.gz").arg(d->zeronetLocation));
+    KIO::FileCopyJob* job = KIO::file_copy(source, destination, -1);
+    connect(job, &KIO::Job::result, [job, this](){ d->downloadZeroNetResult(job); });
+    // Would be lovely to do this with a lambda, but... processedAmount is ambiguously defined.
+    connect(job, SIGNAL(processedAmount(KJob*, KJob::Unit, qulonglong)), this, SLOT(setProcessing(KJob*, KJob::Unit, qulonglong)));
+    job->start();
+}
+
+void zerocontrol::setProcessing(KJob* /*job*/, KJob::Unit /*unit*/, qulonglong percent)
+{
+    KFormat format;
+    d->workingOn = i18n("Downloading ZeroNet (%1)").arg(format.formatByteSize(percent));
+    emit workingOnChanged();
+}
+
+void zerocontrol::installPython()
+{
+    qDebug() << "Attempting to install python";
+    QStringList packages = QString(PYTHON_PACKAGE_NAMES).split(" ");
+    auto resolveTransaction = PackageKit::Daemon::global()->resolve(packages, PackageKit::Transaction::FilterArch);
+    Q_ASSERT(resolveTransaction);
+
+    connect(resolveTransaction, &PackageKit::Transaction::percentageChanged, resolveTransaction, [this, resolveTransaction](){
+        if(resolveTransaction->percentage() < 101) {
+            d->workingOn = i18n("Installing python (%1%)").arg(QString::number(resolveTransaction->percentage()));
+        }
+        else {
+            d->workingOn = i18n("Installing python...");
+        }
+        emit workingOnChanged();
+    });
+    QHash<QString, QString>* pkgs = new QHash<QString, QString>();
+    QObject::connect(resolveTransaction, &PackageKit::Transaction::package, resolveTransaction, [pkgs](PackageKit::Transaction::Info info, const QString &packageID, const QString &/*summary*/) {
+        if (info == PackageKit::Transaction::InfoAvailable) {
+            pkgs->insert(PackageKit::Daemon::packageName(packageID), packageID);
+        }
+        qDebug() << "resolved package"  << info << packageID;
+    });
+
+    QObject::connect(resolveTransaction, &PackageKit::Transaction::finished, resolveTransaction, [this, pkgs, resolveTransaction](PackageKit::Transaction::Exit status) {
+        if (status != PackageKit::Transaction::ExitSuccess) {
+            d->endWorkingOn("Python is not available, or has an unexpected name. Please install it manually.", true);
+            qWarning() << "resolve failed" << status;
+            delete pkgs;
+            resolveTransaction->deleteLater();
+            return;
+        }
+        QStringList pkgids = pkgs->values();
+        delete pkgs;
+
+        if (pkgids.isEmpty()) {
+            d->endWorkingOn("There was nothing new to install.");
+            qDebug() << "Nothing to install";
+        } else {
+            qDebug() << "installing..." << pkgids;
+            pkgids.removeDuplicates();
+            auto installTransaction = PackageKit::Daemon::global()->installPackages(pkgids);
+            QObject::connect(installTransaction, &PackageKit::Transaction::percentageChanged, qApp, [this, installTransaction]() {
+                if(installTransaction->percentage() < 101) {
+                    d->workingOn = i18n("Installing python (%1%)").arg(QString::number(installTransaction->percentage()));
+                }
+                else {
+                    d->workingOn = i18n("Installing python...");
+                }
+                emit workingOnChanged();
+            });
+            QObject::connect(installTransaction, &PackageKit::Transaction::finished, qApp, [this, installTransaction](PackageKit::Transaction::Exit status) {
+                if(status == PackageKit::Transaction::ExitSuccess) {
+                    d->endWorkingOn("Installed Python");
+                }
+                else {
+                    d->endWorkingOn("Python installation failed!", true);
+                }
+                installTransaction->deleteLater();
+            });
+        }
+        resolveTransaction->deleteLater();
+    });
 }
 
 K_EXPORT_PLASMA_APPLET_WITH_JSON(zerocontrol, zerocontrol, "metadata.json")

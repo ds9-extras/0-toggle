@@ -31,6 +31,8 @@ class zerocontrol : public Plasma::Applet
     Q_PROPERTY(QString iconName READ iconName NOTIFY statusChanged)
     Q_PROPERTY(bool systemZeronet READ systemZeronet WRITE setSystemZeronet NOTIFY systemZeronetChanged)
     Q_PROPERTY(QString zeronetLocation READ zeronetLocation WRITE setZeronetLocation NOTIFY zeronetLocationChanged)
+
+    Q_PROPERTY(QString workingOn READ workingOn NOTIFY workingOnChanged);
 public:
     zerocontrol( QObject *parent, const QVariantList &args );
     ~zerocontrol();
@@ -38,7 +40,9 @@ public:
     enum RunningStatus {
         Unknown = 0,
         Running = 1,
-        NotRunning = 2
+        NotRunning = 2,
+        NotZeronet = 3,
+        NoPython = 4
     };
     RunningStatus status() const;
     // NOTE This will attempt to set the status, but given the nature of
@@ -58,6 +62,13 @@ public:
     void setZeronetLocation(QString newLocation);
     Q_SIGNAL void zeronetLocationChanged();
 
+    QString workingOn() const;
+    Q_SIGNAL void workingOnChanged();
+
+    Q_INVOKABLE void installZeroNet();
+    Q_INVOKABLE void installPython();
+
+    Q_SLOT void setProcessing(KJob* job, KJob::Unit unit, qulonglong percent);
 private:
     class Private;
     Private* d;
