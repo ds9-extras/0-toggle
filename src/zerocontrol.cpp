@@ -190,7 +190,7 @@ public:
                     if(dir->copyTo(zeronetLocation)) {
                         endWorkingOn(i18n("Completed ZeroNet installation!"));
                         tarball.close();
-                        QFile::remove(QString("%1.tar.gz").arg(zeronetLocation));
+                        QFile::remove(tarball.fileName());
                         updateStatus();
                     }
                     else {
