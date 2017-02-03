@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=ZeroNet Controller
-Comment=Control ZeroNet on your system
+Comment=Control ZeroNet from your panel
 
-Icon=applications-system
+Icon=zeronet
 Type=Service
 ServiceTypes=Plasma/Applet
 
