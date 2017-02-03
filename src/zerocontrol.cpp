@@ -127,6 +127,19 @@ public:
             // python does not function properly...
             return false;
         }
+        // now let's make sure python in fact has the modules we need
+        pythonTest.start("pydoc", QStringList() << "modules");
+        if(!(pythonTest.waitForStarted() && pythonTest.waitForFinished(4000))) {
+            status = NoPython;
+            // pydoc isn't working right for whatever reason, which is obviously bad
+            return false;
+        }
+        QString pythonModules = pythonTest.readAll();
+        if(!pythonModules.contains("gevent") || !pythonModules.contains("msgpack")) {
+            status = NoPython;
+            // pydoc says we haven't got gevent and msgpack
+            return false;
+        }
         // check zeronet availability
         if(!QFile::exists(QString("%1/zeronet.py").arg(zeronetLocation))) {
 //         if(true) {
@@ -377,17 +390,20 @@ void zerocontrol::setProcessing(KJob* /*job*/, KJob::Unit /*unit*/, qulonglong p
 
 void zerocontrol::installPython()
 {
-    qDebug() << "Attempting to install python";
+    qDebug() << "Attempting to install Python";
+    d->workingOn = i18n("Installing Python");
+    emit workingOnChanged();
+
     QStringList packages = QString(PYTHON_PACKAGE_NAMES).split(" ");
     auto resolveTransaction = PackageKit::Daemon::global()->resolve(packages, PackageKit::Transaction::FilterArch);
     Q_ASSERT(resolveTransaction);
 
     connect(resolveTransaction, &PackageKit::Transaction::percentageChanged, resolveTransaction, [this, resolveTransaction](){
         if(resolveTransaction->percentage() < 101) {
-            d->workingOn = i18n("Installing python (%1%)").arg(QString::number(resolveTransaction->percentage()));
+            d->workingOn = i18n("Installing Python (%1%)").arg(QString::number(resolveTransaction->percentage()));
         }
         else {
-            d->workingOn = i18n("Installing python...");
+            d->workingOn = i18n("Installing Python...");
         }
         emit workingOnChanged();
     });
@@ -419,10 +435,10 @@ void zerocontrol::installPython()
             auto installTransaction = PackageKit::Daemon::global()->installPackages(pkgids);
             QObject::connect(installTransaction, &PackageKit::Transaction::percentageChanged, qApp, [this, installTransaction]() {
                 if(installTransaction->percentage() < 101) {
-                    d->workingOn = i18n("Installing python (%1%)").arg(QString::number(installTransaction->percentage()));
+                    d->workingOn = i18n("Installing Python (%1%)").arg(QString::number(installTransaction->percentage()));
                 }
                 else {
-                    d->workingOn = i18n("Installing python...");
+                    d->workingOn = i18n("Installing Python...");
                 }
                 emit workingOnChanged();
             });

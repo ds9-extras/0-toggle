@@ -89,7 +89,7 @@ Item {
             anchors.fill: parent;
             wrapMode: Text.WordWrap;
             verticalAlignment: Text.AlignTop;
-            text: i18n("Python is either not working, or not installed. If it is not installed, please <a href=\"installPython\">click here to install it now</a>, or do so manually.");
+            text: i18n("Python is either not working, is missing required modules (msgpack and gevent), or not installed. If it is not installed or modules missing, please <a href=\"installPython\">click here to install the missing elements now</a>, or do so manually.");
             onLinkActivated: {
                 if(link == "installPython") {
                     plasmoid.nativeInterface.installPython();
