@@ -129,7 +129,7 @@ public:
         }
         // now let's make sure python in fact has the modules we need
         pythonTest.start("pydoc", QStringList() << "modules");
-        if(!(pythonTest.waitForStarted() && pythonTest.waitForFinished(4000))) {
+        if(!(pythonTest.waitForStarted() && pythonTest.waitForFinished(30000))) {
             status = NoPython;
             // pydoc isn't working right for whatever reason, which is obviously bad
             return false;
@@ -146,6 +146,7 @@ public:
             status = NotZeronet;
             return false;
         }
+        // TODO check sanity of TOR installation - group readable cookie file...
         // If we get to here, then the system is sane
         return true;
     }
