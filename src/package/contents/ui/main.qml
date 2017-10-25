@@ -27,7 +27,7 @@ Item {
     id: root;
 
     Plasmoid.icon: "zeronet";
-    Plasmoid.toolTipMainText: i18n("ZeroNet Controller")
+    Plasmoid.toolTipMainText: plasmoid.nativeInterface.workingOn === "" ? i18n("ZeroNet Controller") : plasmoid.nativeInterface.workingOn;
     Plasmoid.toolTipSubText: plasmoid.nativeInterface.buttonLabel
 
     function changeRunningStatus() {
@@ -58,6 +58,11 @@ Item {
             source: "zeronet";
             enabled: plasmoid.nativeInterface.status == 1;
             active: compactMouse.containsMouse;
+            PlasmaComponents.BusyIndicator {
+                anchors.fill: parent;
+                running: plasmoid.nativeInterface.workingOn !== "" ? 1 : 0;
+                visible: running;
+            }
         }
         MouseArea {
             id: compactMouse;
