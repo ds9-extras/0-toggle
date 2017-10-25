@@ -125,6 +125,14 @@ public:
             return false;
         }
         runningCheck = true;
+        // check zeronet availability
+        if(!QFile::exists(QString("%1/zeronet.py").arg(zeronetLocation))) {
+//         if(true) {
+//             qDebug() << "No zeronet";
+            status = NotZeronet;
+            runningCheck = false;
+            return false;
+        }
         // check python install
         QProcess pythonTest;
         pythonTest.start("python", QStringList() << "--version");
@@ -147,14 +155,6 @@ public:
         if(!pythonModules.contains("gevent") || !pythonModules.contains("msgpack")) {
             status = NoPython;
 //             qDebug() << "pydoc says we haven't got gevent and msgpack.";
-            runningCheck = false;
-            return false;
-        }
-        // check zeronet availability
-        if(!QFile::exists(QString("%1/zeronet.py").arg(zeronetLocation))) {
-//         if(true) {
-//             qDebug() << "No zeronet";
-            status = NotZeronet;
             runningCheck = false;
             return false;
         }
