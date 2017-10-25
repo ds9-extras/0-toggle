@@ -44,6 +44,7 @@ public:
         , systemZeronet(false)
         , zeronetPid(-1)
         , status(Unknown)
+        , runningCheck(false)
     {
         findZeronetPid();
         setWhatSuProgram();
@@ -117,40 +118,56 @@ public:
 
     QTimer statusCheck;
     RunningStatus status;
+    bool runningCheck;
     bool systemSanityCheck() {
+        if(runningCheck || !workingOn.isEmpty()) {
+//             qDebug() << "Sanity check while already running a check, pass";
+            return false;
+        }
+        runningCheck = true;
         // check python install
         QProcess pythonTest;
         pythonTest.start("python", QStringList() << "--version");
         if(!(pythonTest.waitForStarted() && pythonTest.waitForFinished(1000))) {
 //         if(true) {
             status = NoPython;
-            // python does not function properly...
+//             qDebug() << "python does not function properly...";
+            runningCheck = false;
             return false;
         }
         // now let's make sure python in fact has the modules we need
         pythonTest.start("pydoc", QStringList() << "modules");
         if(!(pythonTest.waitForStarted() && pythonTest.waitForFinished(30000))) {
             status = NoPython;
-            // pydoc isn't working right for whatever reason, which is obviously bad
+//             qDebug() << "pydoc isn't working right for whatever reason, which is obviously bad";
+            runningCheck = false;
             return false;
         }
         QString pythonModules = pythonTest.readAll();
         if(!pythonModules.contains("gevent") || !pythonModules.contains("msgpack")) {
             status = NoPython;
-            // pydoc says we haven't got gevent and msgpack
+//             qDebug() << "pydoc says we haven't got gevent and msgpack.";
+            runningCheck = false;
             return false;
         }
         // check zeronet availability
         if(!QFile::exists(QString("%1/zeronet.py").arg(zeronetLocation))) {
 //         if(true) {
+//             qDebug() << "No zeronet";
             status = NotZeronet;
+            runningCheck = false;
             return false;
         }
         // TODO check sanity of TOR installation - group readable cookie file...
         // If we get to here, then the system is sane
+        runningCheck = false;
         return true;
     }
     void updateStatus() {
+        if(runningCheck) {
+//             qDebug() << "Running check, let's not do anything silly...";
+            return;
+        }
         if(zeronetPid > 0) {
             status = Running;
             struct stat sts;
@@ -392,7 +409,7 @@ void zerocontrol::setProcessing(KJob* /*job*/, KJob::Unit /*unit*/, qulonglong p
 void zerocontrol::installPython()
 {
     qDebug() << "Attempting to install Python";
-    d->workingOn = i18n("Installing Python");
+    d->workingOn = i18n("Installing Python packages: %1").arg(PYTHON_PACKAGE_NAMES);
     emit workingOnChanged();
 
     QStringList packages = QString(PYTHON_PACKAGE_NAMES).split(" ");
@@ -451,6 +468,7 @@ void zerocontrol::installPython()
                     d->endWorkingOn("Python installation failed!", true);
                 }
                 installTransaction->deleteLater();
+                d->updateStatus();
             });
         }
         resolveTransaction->deleteLater();
