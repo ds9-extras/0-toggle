@@ -144,17 +144,16 @@ public:
             return false;
         }
         // now let's make sure python in fact has the modules we need
-        pythonTest.start("pydoc", QStringList() << "modules");
-        if(!(pythonTest.waitForStarted() && pythonTest.waitForFinished(30000))) {
+        pythonTest.start("python -c \"import msgpack; import gevent\"");
+        if(!(pythonTest.waitForStarted() && pythonTest.waitForFinished(1000))) {
             status = NoPython;
-//             qDebug() << "pydoc isn't working right for whatever reason, which is obviously bad";
+//             qDebug() << "python isn't working right for whatever reason, which is obviously bad";
             runningCheck = false;
             return false;
         }
-        QString pythonModules = pythonTest.readAll();
-        if(!pythonModules.contains("gevent") || !pythonModules.contains("msgpack")) {
+        if(pythonTest.exitCode() != 0) {
             status = NoPython;
-//             qDebug() << "pydoc says we haven't got gevent and msgpack.";
+//             qDebug() << "python says we haven't got gevent and msgpack.";
             runningCheck = false;
             return false;
         }
