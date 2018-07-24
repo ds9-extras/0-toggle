@@ -211,7 +211,12 @@ public:
                         updateStatus();
                     }
                     else {
+#ifdef KF5_ARCHIVE_IS_OLD
+#warning Old KArchive has been detected, you should consider upgrading to a less ancient KDE Frameworks 5 version
+                        endWorkingOn(i18n("Failed to decompress the ZeroNet archive. Please check the console output to see the real error."), true);
+#else
                         endWorkingOn(i18n("Failed to decompress the ZeroNet archive. The reported error was: %1").arg(tarball.errorString()), true);
+#endif
                     }
                 }
                 else {

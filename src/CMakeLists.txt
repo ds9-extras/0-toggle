@@ -13,6 +13,10 @@ add_library(plasma_applet_zerocontrol MODULE ${zerocontrol_SRCS})
 
 kcoreaddons_desktop_to_json(plasma_applet_zerocontrol package/metadata.desktop SERVICE_TYPES plasma-applet.desktop)
 
+if(${KF5Archive_VERSION} VERSION_LESS_EQUAL 5.28.0)
+    target_compile_definitions(plasma_applet_zerocontrol PRIVATE KF5_ARCHIVE_IS_OLD)
+endif()
+
 target_compile_definitions(plasma_applet_zerocontrol PRIVATE PYTHON_PACKAGE_NAMES="${PYTHON_PACKAGE_NAMES}")
 target_link_libraries(plasma_applet_zerocontrol
                       Qt5::Gui
